@@ -1,4 +1,4 @@
-import React, { forwardRef } from "react";
+import React, { forwardRef, ForwardedRef } from "react";
 
 export interface SVGObject {
   xStart: number;
@@ -26,7 +26,7 @@ interface SVGCanvasProps {
   onMouseUpObj: (obj: SVGObject) => void;
 }
 
-export const SVGCanvas = forwardRef((props: SVGCanvasProps, ref: any) => {
+export const SVGCanvas = forwardRef((props: SVGCanvasProps, ref: ForwardedRef<SVGSVGElement>) => {
   const renderCirc = (obj: SVGObject) => {
     let x, y, w, h;
 

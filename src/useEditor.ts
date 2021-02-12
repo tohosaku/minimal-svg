@@ -10,7 +10,7 @@ export interface State {
   dragStart: { x: number; y: number } | null;
 }
 
-interface Handler {
+export interface Handler {
   selectTool: (tool: string) => void;
   mouseDown: (e: Coodinate & { shiftKey: boolean }) => void;
   mouseDownObj: (obj: SVGObject, e: Coodinate) => void;
@@ -19,10 +19,23 @@ interface Handler {
   mouseUpObj: (obj: SVGObject) => void;
 }
 
-export const useEditor = (initialState: State) => {
+const initialInternalState = {
+  rectMove: null,
+  rectObject: null,
+  circObject: null,
+  dragStart: null,
+};
+
+export const useEditor = (initialState: {
+  tool: string;
+  objects: SVGObject[];
+}) => {
   const svgRef = useRef() as MutableRefObject<SVGSVGElement>;
 
-  const [state, setState] = useState(initialState);
+  const [state, setState] = useState({
+    ...initialInternalState,
+    ...initialState
+  } as State);
 
   useEffect(() => {
     try {
@@ -222,8 +235,8 @@ export const useEditor = (initialState: State) => {
   };
 
   return [
-    state,
-    svgRef,
+    state.tool,
+    state.objects,
     {
       selectTool,
       mouseDown,
@@ -232,5 +245,6 @@ export const useEditor = (initialState: State) => {
       mouseUp,
       mouseUpObj,
     } as Handler,
+    svgRef,
   ] as const;
 };
