@@ -4,14 +4,14 @@ import { useEditor } from "./useEditor";
 import { SVGEditor } from "./svg-editor";
 
 const SVGEditorContainer = () => {
-  const initialState = {
+  const [tool, objects, handler, svgRef] = useEditor({
     tool: "circ",
-    objects: []
-  };
+    objects: [],
+  });
 
-  const [tool, objects, handler, svgRef] = useEditor(initialState);
-
-  return <SVGEditor tool={tool} objects={objects} handler={handler} ref={svgRef}/>;
+  return (
+    <SVGEditor tool={tool} objects={objects} handler={handler} ref={svgRef} />
+  );
 };
 
 ReactDOM.render(<SVGEditorContainer />, document.getElementById("app"));

@@ -1,7 +1,7 @@
 import React, { forwardRef, ForwardedRef } from "react";
-import { SVGCanvas, SVGObject } from "./svg-canvas";
+import { Handler, SVGObject } from "./base";
+import { SVGCanvas } from "./svg-canvas";
 import { ToolBar } from "./toolbar";
-import { Handler } from "./useEditor";
 
 interface SVGEditorProps {
   tool: string;

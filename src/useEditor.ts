@@ -1,22 +1,18 @@
 import { useState, useEffect, useRef, MutableRefObject } from "react";
-import { SVGObject, Coodinate } from "./svg-canvas";
+import { SVGObject, EditorMouseEvent, Handler } from "./base";
 
-export interface State {
+interface State {
   objects: Array<SVGObject>;
   tool: string;
   rectMove: number | null;
   rectObject: number | null;
   circObject: number | null;
-  dragStart: { x: number; y: number } | null;
+  dragStart: Coodinate | null;
 }
 
-export interface Handler {
-  selectTool: (tool: string) => void;
-  mouseDown: (e: Coodinate & { shiftKey: boolean }) => void;
-  mouseDownObj: (obj: SVGObject, e: Coodinate) => void;
-  mouseMove: (e: Coodinate & { shiftKey: boolean }) => void;
-  mouseUp: () => void;
-  mouseUpObj: (obj: SVGObject) => void;
+interface Coodinate {
+  x: number;
+  y: number;
 }
 
 const initialInternalState = {
@@ -34,7 +30,7 @@ export const useEditor = (initialState: {
 
   const [state, setState] = useState({
     ...initialInternalState,
-    ...initialState
+    ...initialState,
   } as State);
 
   useEffect(() => {
@@ -54,16 +50,14 @@ export const useEditor = (initialState: {
       }
     */
 
-  const getCoords = ({ clientX, clientY }: Coodinate) => {
+  const getCoords = ({ clientX, clientY }: EditorMouseEvent): Coodinate => {
     const { top, left } = svgRef.current.getBoundingClientRect();
     return { x: clientX - left, y: clientY - top };
   };
 
-  const selectTool = (tool: string) => {
-    setState({ ...state, ...{ tool } });
-  };
+  const selectTool = (tool: string) => setState({ ...state, ...{ tool } });
 
-  const mouseDownObj = (obj: SVGObject, e: Coodinate) => {
+  const mouseDownObj = (obj: SVGObject, e: EditorMouseEvent) => {
     const { tool } = state;
     if (tool === "drag") {
       setState({
@@ -79,11 +73,10 @@ export const useEditor = (initialState: {
     }
   };
 
-  const mouseUpObj = (obj: SVGObject) => {
+  const mouseUpObj = (obj: SVGObject) =>
     setState({ ...state, ...{ rectMove: null } });
-  };
 
-  const mouseDown = (e: Coodinate & { shiftKey: boolean }) => {
+  const mouseDown = (e: EditorMouseEvent) => {
     const { shiftKey } = e;
     const { x: xStart, y: yStart } = getCoords(e);
 
@@ -146,7 +139,7 @@ export const useEditor = (initialState: {
     }
   };
 
-  const mouseMove = (e: Coodinate & { shiftKey: boolean }) => {
+  const mouseMove = (e: EditorMouseEvent & { shiftKey: boolean }) => {
     const { rectObject, circObject, rectMove, dragStart } = state;
     if (rectObject) {
       const index = state.objects.findIndex((o) => o.id === rectObject);
@@ -194,10 +187,7 @@ export const useEditor = (initialState: {
 
     if (rectMove && dragStart) {
       const index = state.objects.findIndex((o) => o.id === rectMove);
-      const {
-        x: xDragStart,
-        y: yDragStart,
-      }: { x: number; y: number } = dragStart;
+      const { x: xDragStart, y: yDragStart } = dragStart;
       const { clientX: xDragEnd, clientY: yDragEnd } = e;
       const xDelta = xDragEnd - xDragStart;
       const yDelta = yDragEnd - yDragStart;
@@ -223,7 +213,7 @@ export const useEditor = (initialState: {
     }
   };
 
-  const mouseUp = () => {
+  const mouseUp = () =>
     setState({
       ...state,
       ...{
@@ -232,7 +222,6 @@ export const useEditor = (initialState: {
         circObject: null,
       },
     });
-  };
 
   return [
     state.tool,
