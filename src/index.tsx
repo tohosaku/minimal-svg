@@ -1,78 +1,95 @@
-import React from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import ReactDOM from 'react-dom'
 import classNames from 'classnames'
 
 interface State {
-  objects: Array<any>,
-  tool?: any
-  rectMove?: any
-  rectObject?: any
-  circObject?: any
-  dragStart: any
-  id?: any
-  bg?: any
+  objects: Array<SVGObject>
+  tool: string
+  rectMove: number | null
+  rectObject: number | null
+  circObject: number | null
+  dragStart: { x: number, y: number } | null
 }
 
-class Editor extends React.Component<{}, State> {
+interface SVGObject {
+  xStart: number
+  xEnd: number
+  yStart: number
+  yEnd: number
+  locked: boolean
+  id: number
+  bg: string
+  type: string
+}
 
-  svgRef: any = React.createRef();
+interface Coodinate { clientX: number, clientY: number }
 
-  state: State = {
-    tool: "circ",
-    rectMove: null,
-    rectObject: null,
-    circObject: null,
-    dragStart: null,
-    objects: []
-  };
+const initialState: State = {
+  tool: "circ",
+  rectMove: null,
+  rectObject: null,
+  circObject: null,
+  dragStart: null,
+  objects: []
+};
 
-  componentDidMount() {
+const SVGEditor: React.FC<{}> = () => {
+
+  const [state, setState] = useState(initialState);
+
+  const svgRef: any = useRef();
+
+  useEffect(() => {
     try {
       const json = localStorage.getItem("canvas");
       if (json != null) {
-        this.setState(JSON.parse(json));
+        setState(JSON.parse(json));
       }
     } catch (err: any) {
       console.warn("Failed to restore state", err);
     }
-  }
+  }, [])
 
-  componentDidUpdate() {
-    localStorage.setItem("canvas", JSON.stringify(this.state));
-  }
+  /*
+   componentDidUpdate() {
+      localStorage.setItem("canvas", JSON.stringify(this.state));
+    }
+  */
 
-  getCoords({ clientX, clientY }: { clientX: number, clientY: number }) {
-    const { top, left } = this.svgRef.current.getBoundingClientRect();
+  const getCoords = ({ clientX, clientY }: Coodinate) => {
+    const { top, left } = svgRef.current.getBoundingClientRect();
     return { x: clientX - left, y: clientY - top };
   }
 
-  handleSelectTool(tool: any) {
-    this.setState({ tool });
+  const handleSelectTool = (tool: string) => {
+    setState({ ...state, ...{ tool } });
   }
 
-  handleMouseDownObj(obj: any, e: any) {
-    const { tool } = this.state;
+  const handleMouseDownObj = (obj: SVGObject, e: Coodinate) => {
+    const { tool } = state;
     if (tool === "drag") {
-      this.setState({
-        rectMove: obj.id,
-        dragStart: {
-          x: e.clientX,
-          y: e.clientY
+      setState({
+        ...state, ...{
+          rectMove: obj.id,
+          dragStart: {
+            x: e.clientX,
+            y: e.clientY
+          }
         }
       });
     }
   }
 
-  handleMouseUpObj(obj: any, e: any) {
-    this.setState({ rectMove: null });
+  const handleMouseUpObj = (obj: SVGObject) => {
+    setState({ rectMove: null } as State);
   }
 
-  handleMouseDown(e: any) {
+  const handleMouseDown = (e: Coodinate & { shiftKey: boolean }) => {
     const { shiftKey } = e;
-    const { x: xStart, y: yStart } = this.getCoords(e);
+    const { x: xStart, y: yStart } = getCoords(e);
 
-    if (this.state.tool === "rect") {
-      this.setState((s: State) => {
+    if (state.tool === "rect") {
+      setState((s: State) => {
         const obj = {
           id: Date.now(),
           type: "rect",
@@ -88,14 +105,16 @@ class Editor extends React.Component<{}, State> {
           locked: shiftKey
         };
         return {
-          objects: [...s.objects, obj],
-          rectObject: obj.id
+          ...state, ...{
+            objects: [...s.objects, obj],
+            rectObject: obj.id
+          }
         };
       });
     }
 
-    if (this.state.tool === "circ") {
-      this.setState((s: State) => {
+    if (state.tool === "circ") {
+      setState((s: State) => {
         const obj = {
           id: Date.now(),
           type: "circ",
@@ -111,67 +130,73 @@ class Editor extends React.Component<{}, State> {
           locked: shiftKey
         };
         return {
-          objects: [...s.objects, obj],
-          circObject: obj.id
+          ...state, ...{
+            objects: [...s.objects, obj],
+            circObject: obj.id
+          }
         };
       });
     }
   }
 
-  handleMouseMove(e: any) {
-    const { rectObject, circObject, rectMove, dragStart } = this.state;
+  const handleMouseMove = (e: Coodinate & { shiftKey: boolean }) => {
+    const { rectObject, circObject, rectMove, dragStart } = state;
     if (rectObject) {
-      const index = this.state.objects.findIndex(o => o.id === rectObject);
-      const { x: xEnd, y: yEnd } = this.getCoords(e);
+      const index = state.objects.findIndex(o => o.id === rectObject);
+      const { x: xEnd, y: yEnd } = getCoords(e);
       const obj = {
-        ...this.state.objects[index],
+        ...state.objects[index],
         xEnd,
         yEnd,
         locked: e.shiftKey
       };
 
-      this.setState({
-        objects: [
-          ...this.state.objects.slice(0, index),
-          obj,
-          ...this.state.objects.slice(index + 1)
-        ]
+      setState({
+        ...state, ...{
+          objects: [
+            ...state.objects.slice(0, index),
+            obj,
+            ...state.objects.slice(index + 1)
+          ]
+        }
       });
     }
 
     if (circObject) {
-      const index = this.state.objects.findIndex(o => o.id === circObject);
-      const { x: xEnd, y: yEnd } = this.getCoords(e);
+      const index = state.objects.findIndex(o => o.id === circObject);
+      const { x: xEnd, y: yEnd } = getCoords(e);
       const obj = {
-        ...this.state.objects[index],
+        ...state.objects[index],
         xEnd,
         yEnd,
         locked: e.shiftKey
       };
 
-      this.setState({
-        objects: [
-          ...this.state.objects.slice(0, index),
-          obj,
-          ...this.state.objects.slice(index + 1)
-        ]
+      setState({
+        ...state, ...{
+          objects: [
+            ...state.objects.slice(0, index),
+            obj,
+            ...state.objects.slice(index + 1)
+          ]
+        }
       });
     }
 
     if (rectMove && dragStart) {
-      const index = this.state.objects.findIndex(o => o.id === rectMove);
+      const index = state.objects.findIndex(o => o.id === rectMove);
       const { x: xDragStart, y: yDragStart }: { x: number, y: number } = dragStart;
       const { clientX: xDragEnd, clientY: yDragEnd } = e;
       const xDelta = xDragEnd - xDragStart;
       const yDelta = yDragEnd - yDragStart;
-      const obj = this.state.objects[index];
-      this.setState({
+      const obj = state.objects[index];
+      const newstate = {
         dragStart: {
           x: xDragEnd,
           y: yDragEnd
         },
         objects: [
-          ...this.state.objects.slice(0, index),
+          ...state.objects.slice(0, index),
           {
             ...obj,
             xStart: obj.xStart + xDelta,
@@ -179,21 +204,24 @@ class Editor extends React.Component<{}, State> {
             yStart: obj.yStart + yDelta,
             yEnd: obj.yEnd + yDelta
           },
-          ...this.state.objects.slice(index + 1)
+          ...state.objects.slice(index + 1)
         ]
-      });
+      }
+      setState({ ...state, ...newstate });
     }
   }
 
-  handleMouseUp(e: any) {
-    this.setState({
-      rectMove: null,
-      rectObject: null,
-      circObject: null
+  const handleMouseUp = () => {
+    setState({
+      ...state, ...{
+        rectMove: null,
+        rectObject: null,
+        circObject: null
+      }
     });
   }
 
-  renderCirc(obj: { xStart: number, xEnd: number, yStart: number, yEnd: number, locked: boolean, id: any, bg: any }) {
+  const renderCirc = (obj: SVGObject) => {
     let x, y, w, h;
 
     if (obj.xStart < obj.xEnd) {
@@ -224,13 +252,13 @@ class Editor extends React.Component<{}, State> {
         rx={rx}
         ry={ry}
         fill={obj.bg}
-        onMouseDown={this.handleMouseDownObj.bind(this, obj)}
-        onMouseUp={this.handleMouseUpObj.bind(this, obj)}
+        onMouseDown={(e) => handleMouseDownObj(obj, e)}
+        onMouseUp={(e) => handleMouseUpObj(obj)}
       />
     );
   }
 
-  renderRect(obj: any) {
+  const renderRect = (obj: SVGObject) => {
     let x, y, w, h;
 
     if (obj.xStart < obj.xEnd) {
@@ -259,45 +287,42 @@ class Editor extends React.Component<{}, State> {
         width={obj.locked ? size : w}
         height={obj.locked ? size : h}
         fill={obj.bg}
-        onMouseDown={this.handleMouseDownObj.bind(this, obj)}
-        onMouseUp={this.handleMouseUpObj.bind(this, obj)}
+        onMouseDown={(e) => handleMouseDownObj(obj, e)}
+        onMouseUp={(e) => handleMouseUpObj(obj)}
       />
     );
   }
 
-  render() {
-    const { objects, tool } = this.state;
-    return (
-      <div className="canvas">
-        <div className="toolbar">
-          {[["rect", "Rectangle"], ["circ", "Circle"], ["drag", "Drag"]].map(t => (
-            <button key={t[0]}
-              onClick={this.handleSelectTool.bind(this, t[0])}
-              className={classNames({ active: tool === t[0] })}>
-              {t[1]}
-            </button>
-          ))}
-        </div>
-        <svg onMouseDown={this.handleMouseDown.bind(this)}
-          onMouseUp={this.handleMouseUp.bind(this)}
-          onMouseMove={this.handleMouseMove.bind(this)}
-          className={`tool--${tool}`}
-          ref={this.svgRef}>
-          {objects.map(o => {
-            if (o.type === "rect") {
-              return this.renderRect(o);
-            }
-
-            if (o.type === "circ") {
-              return this.renderCirc(o);
-            }
-
-            return null;
-          })}
-        </svg>
+  return (
+    <div className="canvas">
+      <div className="toolbar">
+        {[["rect", "Rectangle"], ["circ", "Circle"], ["drag", "Drag"]].map(t => (
+          <button key={t[0]}
+            onClick={(e) => handleSelectTool(t[0])}
+            className={classNames({ active: state.tool === t[0] })}>
+            {t[1]}
+          </button>
+        ))}
       </div>
-    );
-  }
+      <svg onMouseDown={handleMouseDown}
+        onMouseUp={handleMouseUp}
+        onMouseMove={handleMouseMove}
+        className={`tool--${state.tool}`}
+        ref={svgRef}>
+        {state.objects.map(o => {
+          if (o.type === "rect") {
+            return renderRect(o);
+          }
+
+          if (o.type === "circ") {
+            return renderCirc(o);
+          }
+
+          return null;
+        })}
+      </svg>
+    </div>
+  );
 }
 
-ReactDOM.render(<Editor />, document.getElementById('root'));
+ReactDOM.render(<SVGEditor />, document.getElementById('app'));
