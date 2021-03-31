@@ -6,13 +6,6 @@ export interface Handler {
   mouseUp: () => void;
   mouseUpObj: (obj: SVGObject) => void;
 }
-
-export interface EditorMouseEvent {
-  clientX: number;
-  clientY: number;
-  shiftKey?: boolean;
-}
-
 export interface SVGObject {
   xStart: number;
   xEnd: number;
@@ -22,4 +15,14 @@ export interface SVGObject {
   id: number;
   bg: string;
   type: string;
+}
+export interface Coodinate {
+  clientX: number;
+  clientY: number;
+}
+
+export interface EditorMouseEvent {
+  clientX: number;
+  clientY: number;
+  shiftKey?: boolean;
 }
