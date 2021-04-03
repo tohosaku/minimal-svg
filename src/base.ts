@@ -16,13 +16,23 @@ export interface SVGObject {
   bg: string;
   type: string;
 }
-export interface Coodinate {
-  clientX: number;
-  clientY: number;
-}
-
 export interface EditorMouseEvent {
   clientX: number;
   clientY: number;
   shiftKey?: boolean;
 }
+
+export interface State {
+  objects: Array<SVGObject>;
+  tool: string;
+  rectMove: number | null;
+  rectObject: number | null;
+  circObject: number | null;
+  dragStart: Coodinate | null;
+}
+
+export interface Coodinate {
+  x: number;
+  y: number;
+}
+

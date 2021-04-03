@@ -1,19 +1,5 @@
 import { useState, useEffect, useRef, MutableRefObject } from "react";
-import { SVGObject, EditorMouseEvent, Handler } from "./base";
-
-interface State {
-  objects: Array<SVGObject>;
-  tool: string;
-  rectMove: number | null;
-  rectObject: number | null;
-  circObject: number | null;
-  dragStart: Coodinate | null;
-}
-
-interface Coodinate {
-  x: number;
-  y: number;
-}
+import { SVGObject, EditorMouseEvent, Handler, State, Coodinate } from "./base";
 
 const initialInternalState = {
   rectMove: null,
