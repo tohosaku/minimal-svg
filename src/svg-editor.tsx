@@ -5,7 +5,7 @@ import { ToolBar } from "./toolbar";
 
 interface SVGEditorProps {
   tool: string;
-  objects: SVGObject[];
+  objects: Map<number, SVGObject>;
   handler: Handler;
 }
 

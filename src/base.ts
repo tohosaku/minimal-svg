@@ -23,7 +23,7 @@ export interface EditorMouseEvent {
 }
 
 export interface State {
-  objects: Array<SVGObject>;
+  objects: Map<number, SVGObject>;
   tool: string;
   movingObject: number | null;
   creatingObject: number | null;

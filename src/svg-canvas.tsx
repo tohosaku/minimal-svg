@@ -2,7 +2,7 @@ import React, { forwardRef, ForwardedRef } from "react";
 import { EditorMouseEvent, SVGObject } from "./base";
 
 interface SVGCanvasProps {
-  objects: Array<SVGObject>;
+  objects: Map<number, SVGObject>;
   tool: string;
   onMouseDown: (e: EditorMouseEvent) => void;
   onMouseUp: () => void;
@@ -81,7 +81,7 @@ export const SVGCanvas = forwardRef(
         className={`tool--${props.tool}`}
         ref={ref}
       >
-        {props.objects.map((o) =>
+        {Array.from(props.objects.values()).map((o) =>
           o.type === "rect"
             ? renderRect(o)
             : o.type === "circ"
