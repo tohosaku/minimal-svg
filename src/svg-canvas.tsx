@@ -11,26 +11,31 @@ interface SVGCanvasProps {
   onMouseUpObj: (obj: SVGObject) => void;
 }
 
+const getBound = (obj: SVGObject) => {
+  let x, y, w, h;
+
+  if (obj.xStart < obj.xEnd) {
+    x = obj.xStart;
+    w = obj.xEnd - obj.xStart;
+  } else {
+    x = obj.xEnd;
+    w = obj.xStart - obj.xEnd;
+  }
+
+  if (obj.yStart < obj.yEnd) {
+    y = obj.yStart;
+    h = obj.yEnd - obj.yStart;
+  } else {
+    y = obj.yEnd;
+    h = obj.yStart - obj.yEnd;
+  }
+  return { x, y, w, h };
+};
+
 export const SVGCanvas = forwardRef(
   (props: SVGCanvasProps, ref: ForwardedRef<SVGSVGElement>) => {
     const renderCirc = (obj: SVGObject) => {
-      let x, y, w, h;
-
-      if (obj.xStart < obj.xEnd) {
-        x = obj.xStart;
-        w = obj.xEnd - obj.xStart;
-      } else {
-        x = obj.xEnd;
-        w = obj.xStart - obj.xEnd;
-      }
-
-      if (obj.yStart < obj.yEnd) {
-        y = obj.yStart;
-        h = obj.yEnd - obj.yStart;
-      } else {
-        y = obj.yEnd;
-        h = obj.yStart - obj.yEnd;
-      }
+      const { x, y, w, h } = getBound(obj);
 
       const r = Math.min(h / 2, w / 2);
       const rx = obj.locked ? r : w / 2;
@@ -51,24 +56,7 @@ export const SVGCanvas = forwardRef(
     };
 
     const renderRect = (obj: SVGObject) => {
-      let x, y, w, h;
-
-      if (obj.xStart < obj.xEnd) {
-        x = obj.xStart;
-        w = obj.xEnd - obj.xStart;
-      } else {
-        x = obj.xEnd;
-        w = obj.xStart - obj.xEnd;
-      }
-
-      if (obj.yStart < obj.yEnd) {
-        y = obj.yStart;
-        h = obj.yEnd - obj.yStart;
-      } else {
-        y = obj.yEnd;
-        h = obj.yStart - obj.yEnd;
-      }
-
+      const { x, y, w, h } = getBound(obj);
       const size = Math.min(w, h);
 
       return (
@@ -93,14 +81,13 @@ export const SVGCanvas = forwardRef(
         className={`tool--${props.tool}`}
         ref={ref}
       >
-        {props.objects.map((o) => {
+        {props.objects.map((o) =>
           o.type === "rect"
             ? renderRect(o)
             : o.type === "circ"
             ? renderCirc(o)
-            : null;
-        })}
-        )
+            : null
+        )}
       </svg>
     );
   }

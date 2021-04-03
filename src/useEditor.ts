@@ -3,15 +3,11 @@ import { SVGObject, EditorMouseEvent, Handler, State, Coodinate } from "./base";
 
 const initialInternalState = {
   rectMove: null,
-  rectObject: null,
-  circObject: null,
+  creatingObject: null,
   dragStart: null,
 };
 
-export const useEditor = (initialState: {
-  tool: string;
-  objects: SVGObject[];
-}) => {
+export const useEditor = (initialState: Partial<State>) => {
   const svgRef = useRef() as MutableRefObject<SVGSVGElement>;
 
   const [state, setState] = useState({
@@ -49,7 +45,7 @@ export const useEditor = (initialState: {
       setState({
         ...state,
         ...{
-          rectMove: obj.id,
+          movingObject: obj.id,
           dragStart: {
             x: e.clientX,
             y: e.clientY,
@@ -60,25 +56,26 @@ export const useEditor = (initialState: {
   };
 
   const mouseUpObj = (obj: SVGObject) =>
-    setState({ ...state, ...{ rectMove: null } });
+    setState({ ...state, ...{ movingObject: null } });
+
+  const getBgColor = () => "rgb(" +
+  [
+    Math.round(Math.random() * 255),
+    Math.round(Math.random() * 255),
+    Math.round(Math.random() * 255),
+  ] +
+  ")"
 
   const mouseDown = (e: EditorMouseEvent) => {
     const { shiftKey } = e;
     const { x: xStart, y: yStart } = getCoords(e);
 
-    if (state.tool === "rect") {
+    if (state.tool === "rect" || state.tool === "circ") {
       setState((s) => {
         const obj = {
           id: Date.now(),
-          type: "rect",
-          bg:
-            "rgb(" +
-            [
-              Math.round(Math.random() * 255),
-              Math.round(Math.random() * 255),
-              Math.round(Math.random() * 255),
-            ] +
-            ")",
+          type: state.tool,
+          bg: getBgColor(),
           xStart,
           yStart,
           xEnd: xStart,
@@ -89,46 +86,18 @@ export const useEditor = (initialState: {
           ...state,
           ...{
             objects: [...s.objects, obj],
-            rectObject: obj.id,
-          },
-        };
-      });
-    }
-
-    if (state.tool === "circ") {
-      setState((s) => {
-        const obj = {
-          id: Date.now(),
-          type: "circ",
-          bg:
-            "rgb(" +
-            [
-              Math.round(Math.random() * 255),
-              Math.round(Math.random() * 255),
-              Math.round(Math.random() * 255),
-            ] +
-            ")",
-          xStart,
-          yStart,
-          xEnd: xStart,
-          yEnd: yStart,
-          locked: shiftKey,
-        };
-        return {
-          ...state,
-          ...{
-            objects: [...s.objects, obj],
-            circObject: obj.id,
+            creatingObject: obj.id,
           },
         };
       });
     }
   };
 
-  const mouseMove = (e: EditorMouseEvent & { shiftKey: boolean }) => {
-    const { rectObject, circObject, rectMove, dragStart } = state;
-    if (rectObject) {
-      const index = state.objects.findIndex((o) => o.id === rectObject);
+  const mouseMove = (e: EditorMouseEvent) => {
+    const { creatingObject, movingObject, dragStart } = state;
+    const index = state.objects.findIndex((o) => o.id === creatingObject);
+
+    if (index != -1) {
       const { x: xEnd, y: yEnd } = getCoords(e);
       const obj = {
         ...state.objects[index],
@@ -149,30 +118,8 @@ export const useEditor = (initialState: {
       });
     }
 
-    if (circObject) {
-      const index = state.objects.findIndex((o) => o.id === circObject);
-      const { x: xEnd, y: yEnd } = getCoords(e);
-      const obj = {
-        ...state.objects[index],
-        xEnd,
-        yEnd,
-        locked: e.shiftKey,
-      };
-
-      setState({
-        ...state,
-        ...{
-          objects: [
-            ...state.objects.slice(0, index),
-            obj,
-            ...state.objects.slice(index + 1),
-          ],
-        },
-      });
-    }
-
-    if (rectMove && dragStart) {
-      const index = state.objects.findIndex((o) => o.id === rectMove);
+    if (movingObject && dragStart) {
+      const index = state.objects.findIndex((o) => o.id === movingObject);
       const { x: xDragStart, y: yDragStart } = dragStart;
       const { clientX: xDragEnd, clientY: yDragEnd } = e;
       const xDelta = xDragEnd - xDragStart;
@@ -203,9 +150,8 @@ export const useEditor = (initialState: {
     setState({
       ...state,
       ...{
-        rectMove: null,
-        rectObject: null,
-        circObject: null,
+        movingObject: null,
+        creatingObject: null,
       },
     });
 

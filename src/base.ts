@@ -25,9 +25,8 @@ export interface EditorMouseEvent {
 export interface State {
   objects: Array<SVGObject>;
   tool: string;
-  rectMove: number | null;
-  rectObject: number | null;
-  circObject: number | null;
+  movingObject: number | null;
+  creatingObject: number | null;
   dragStart: Coodinate | null;
 }
 
@@ -35,4 +34,3 @@ export interface Coodinate {
   x: number;
   y: number;
 }
-
